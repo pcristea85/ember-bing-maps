@@ -1,10 +1,10 @@
-/* global Microsoft */
 import config from '../config/environment';
 import Component from '@ember/component';
 import { computed } from 'ember-awesome-macros';
 import { get, getWithDefault, getProperties } from '@ember/object';
 
 export default Component.extend({
+  Microsoft: null,
   classNames: ['bing-map'],
   pins: null,
   map: null,
@@ -31,7 +31,7 @@ export default Component.extend({
     this._super();
     let apiKey = getWithDefault(config, 'ember-bing-maps', {}).apiKey;
     if (!apiKey) {
-      throw('Missing bingAPIKey from config/environment');
+      throw ('Missing bingAPIKey from config/environment');
     }
     this.set('defaultOpts.credentials', apiKey);
     try {
@@ -40,16 +40,16 @@ export default Component.extend({
         {
           // Note the minified navigation bar ignores 'supportedMapTypes'
           supportedMapTypes: [
-            Microsoft.Maps.MapTypeId.road,
-            Microsoft.Maps.MapTypeId.aerial,
-            Microsoft.Maps.MapTypeId.birdseye
+            this.Microsoft.Maps.MapTypeId.road,
+            this.Microsoft.Maps.MapTypeId.aerial,
+            this.Microsoft.Maps.MapTypeId.birdseye
           ],
-          mapTypeId: Microsoft.Maps.MapTypeId.road,
-          navigationBarMode: Microsoft.Maps.NavigationBarMode.minified
+          mapTypeId: this.Microsoft.Maps.MapTypeId.road,
+          navigationBarMode: this.Microsoft.Maps.NavigationBarMode.minified
         })
       );
       this.set('didInitialize', true);
-    } catch(e) {
+    } catch (e) {
       // eslint-disable-line no-console
       console.log('There was an error: ', e);
     }
@@ -73,11 +73,11 @@ export default Component.extend({
     }
   },
 
-  addCustomInfoBoxes: function(map, customInfoBoxes) {
+  addCustomInfoBoxes: function (map, customInfoBoxes) {
     customInfoBoxes = (customInfoBoxes || []).map(({ infoBoxTemplate, description, location }) => {
       if (infoBoxTemplate && description && location) {
         return {
-          content: new Microsoft.Maps.Infobox(new Microsoft.Maps.Location(location.latitude, location.longitude), {
+          content: new this.Microsoft.Maps.Infobox(new this.Microsoft.Maps.Location(location.latitude, location.longitude), {
             htmlContent: infoBoxTemplate.replace('{description}', description)
           })
         }
@@ -89,36 +89,36 @@ export default Component.extend({
     });
   },
 
-  createMap: function() {
+  createMap: function () {
     let el = get(this, 'element');
     let opts = get(this, 'mapOptions');
-    let map = new Microsoft.Maps.Map(el, opts);
+    let map = new this.Microsoft.Maps.Map(el, opts);
 
-    let infoBox = new Microsoft.Maps.Infobox(map.getCenter(), {
+    let infoBox = new this.Microsoft.Maps.Infobox(map.getCenter(), {
       visible: false
     });
 
     this.set('infoBox', infoBox);
 
     let customInfoBoxes = get(this, 'infoBoxes');
-    if(customInfoBoxes){
+    if (customInfoBoxes) {
       this.addCustomInfoBoxes(map, customInfoBoxes);
     }
     this.set('map', map);
     this.updateCenter();
   },
 
-  clearEntities: function() {
+  clearEntities: function () {
     let map = get(this, 'map');
     let handlers = get(this, 'handlers');
-    (handlers || []).forEach( Microsoft.Maps.Events.removeHandler );
+    (handlers || []).forEach(this.Microsoft.Maps.Events.removeHandler);
     this.set('handlers', []);
     if (map) {
       map.entities.clear();
     }
   },
 
-  addPinEvents: function(pin) {
+  addPinEvents: function (pin) {
     let {
       handlers,
       events,
@@ -127,8 +127,8 @@ export default Component.extend({
     } = getProperties(this, 'handlers', 'events', 'infoBox', 'map');
     let pinEvents = getWithDefault(events, 'pin', {});
 
-    Object.keys(pinEvents).map( (eventName) => {
-      handlers.push(Microsoft.Maps.Events.addHandler(
+    Object.keys(pinEvents).map((eventName) => {
+      handlers.push(this.Microsoft.Maps.Events.addHandler(
         pin,
         eventName,
         (e) => pinEvents[eventName](e, infoBox, map)
@@ -148,7 +148,7 @@ export default Component.extend({
       map.setView({ center, bounds, zoom, padding });
       this.clearEntities();
       locations.forEach((location) => {
-        let pin = new Microsoft.Maps.Pushpin(location.loc, location.options);
+        let pin = new this.Microsoft.Maps.Pushpin(location.loc, location.options);
         pin.metadata = (location.options || {}).metadata || {};
         map.entities.push(pin);
         this.addPinEvents(pin);
@@ -156,7 +156,7 @@ export default Component.extend({
     }
   },
 
-  removeMap: function() {
+  removeMap: function () {
     this.clearEntities();
     let map = this.get('map');
     if (map) {
@@ -165,9 +165,9 @@ export default Component.extend({
   },
 
   locations: computed('pins', (pins) => {
-    return (pins || []).map( ({ latitude, longitude, options }) => {
+    return (pins || []).map(({ latitude, longitude, options }) => {
       if (latitude && longitude) {
-        return { loc: new Microsoft.Maps.Location(latitude, longitude), options}
+        return { loc: new this.Microsoft.Maps.Location(latitude, longitude), options }
       }
       return false;
     }).filter(Boolean);
@@ -176,7 +176,7 @@ export default Component.extend({
   centerBounds: computed('locations', (locations) => {
     let bounds;
     if (locations.length) {
-      bounds = Microsoft.Maps.LocationRect.fromLocations(locations.map(l => l.loc));
+      bounds = this.Microsoft.Maps.LocationRect.fromLocations(locations.map(l => l.loc));
     }
     return bounds;
   }),
